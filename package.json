@@ -1,0 +1,31 @@
+{
+  "name": "akp48-plugin-skype",
+  "version": "1.0.0",
+  "description": "Skype plugin for AKP48.",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "preversion": "git checkout master && git pull && npm ls",
+    "publish-patch": "npm run preversion && npm version patch && git push origin master --tags && npm publish",
+    "publish-minor": "npm run preversion && npm version minor && git push origin master --tags && npm publish",
+    "publish-major": "npm run preversion && npm version major && git push origin master --tags && npm publish"
+  },
+  "author": "Austin Peterson <austin@akpwebdesign.com> (http://akpwebdesign.com)",
+  "contributors": [
+    "Alan H (Feildmaster) <admin@feildmaster.com> (http://feildmaster.com/)",
+    "Austin Peterson <austin@akpwebdesign.com> (http://akpwebdesign.com/)"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AKP48Squared/skype-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AKP48Squared/skype-server/issues"
+  },
+  "homepage": "https://github.com/AKP48Squared/skype-server",
+  "dependencies": {
+    "restify": "^4.0.4",
+    "skype-sdk": "https://devportalassets.azureedge.net/files/skype-sdk.tar.gz"
+  }
+}
