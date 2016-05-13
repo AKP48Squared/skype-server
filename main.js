@@ -1,14 +1,11 @@
 'use strict';
-const ServerConnectorPlugin = require('../../lib/ServerConnectorPlugin');
 const restify = require('restify');
 const skype = require('skype-sdk');
 var c = require('irc-colors');
 
-class Skype extends ServerConnectorPlugin {
-  constructor(config, id, AKP48) {
-    super('Skype', AKP48);
-    this._id = id;
-    this._config = config;
+class Skype extends global.AKP48.pluginTypes.ServerConnector {
+  constructor(AKP48, config, id) {
+    super('Skype', AKP48, config, id);
     if(!config || !config.appId || !config.appSecret) {
       global.logger.error(`${this._pluginName}: Required appId and/or appSecret options missing from config!`);
       this._error = true;
