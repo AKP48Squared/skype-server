@@ -1,6 +1,6 @@
 {
   "name": "akp48-plugin-skype",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Skype plugin for AKP48.",
   "main": "main.js",
   "scripts": {
