@@ -134,3 +134,4 @@ Skype.prototype.getPersistentObjects = function () {
 
 module.exports = Skype;
 module.exports.type = 'ServerConnector';
+module.exports.pluginName = 'skype';
