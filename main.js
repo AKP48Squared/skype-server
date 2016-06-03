@@ -53,7 +53,7 @@ class Skype extends global.AKP48.pluginTypes.ServerConnector {
 
     this._AKP48.on('msg_'+this._id, function(to, message, context) {
       message = c.stripColorsAndStyle(message);
-      self._botService.send(to, message, true);
+      self._botService.send(to, message, false);
       self._AKP48.sentMessage(to, message, context);
     });
   }
