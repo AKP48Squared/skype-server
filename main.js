@@ -4,20 +4,28 @@ const skype = require('skype-sdk');
 var c = require('irc-colors');
 
 class Skype extends global.AKP48.pluginTypes.ServerConnector {
-  constructor(AKP48, config, id) {
-    super('Skype', AKP48, config, id);
+
+  constructor(AKP48) {
+    super(AKP48, 'skype-server');
+  }
+
+  load() {
+    this._defaultCommandDelimiters = ['!', '.'];
+    var self = this;
+    var config = this._config;
+
+
     if(!config || !config.appId || !config.appSecret) {
       global.logger.error(`${this._pluginName}: Required appId and/or appSecret options missing from config!`);
       this._error = true;
       return;
     }
+
     if(!config.keyLoc || !config.certLoc) {
       global.logger.error(`${this._pluginName}: No certificate and/or key found! Cannot start Skype plugin.`);
       this._error = true;
       return;
     }
-    var self = this;
-    this._defaultCommandDelimiters = ['!', '.'];
 
     this._botService = new skype.BotService({
       messaging: {
@@ -34,11 +42,11 @@ class Skype extends global.AKP48.pluginTypes.ServerConnector {
     });
 
     this._botService.on('personalMessage', (bot, data) => {
-      self._AKP48.onMessage(data.content, self.createContextsFromMessage(bot, data));
+      self._AKP48.onMessage(self.createContextFromMessage(bot, data));
     });
 
     this._botService.on('groupMessage', (bot, data) => {
-      self._AKP48.onMessage(data.content, self.createContextsFromMessage(bot, data));
+      self._AKP48.onMessage(self.createContextFromMessage(bot, data));
     });
 
     this._server = restify.createServer({
@@ -53,7 +61,7 @@ class Skype extends global.AKP48.pluginTypes.ServerConnector {
 
     this._AKP48.on('msg_'+this._id, function(to, message, context) {
       message = c.stripColorsAndStyle(message);
-      self._botService.send(to, message, true); // TODO: Expose formatting flag (third param) as custom data in Context.
+      self._botService.send(to, message, !context.getCustomData('skype-no-escape')); // custom data will be null if unset. !null === true. custom data will be true if set. !true === false.
       self._AKP48.sentMessage(to, message, context);
     });
   }
@@ -63,13 +71,9 @@ class Skype extends global.AKP48.pluginTypes.ServerConnector {
       global.logger.error(`${this._pluginName}|${this._id}: Cannot connect. Check log for errors.`);
       return;
     }
-    if(this._connected) {
-      global.logger.debug(`${this._pluginName}|${this._id}: Using previous server.`);
-      this._connected = false;
-    } else {
-      this._server.listen(this._port);
-      global.logger.debug(`${this._pluginName}|${this._id}: Server listening for incoming requests on port ${this._port}.`);
-    }
+
+    this._server.listen(this._port);
+    global.logger.debug(`${this._pluginName}|${this._id}: Server listening for incoming requests on port ${this._port}.`);
     this._AKP48.emit('serverConnect', this._id, this);
   }
 
@@ -82,49 +86,22 @@ class Skype extends global.AKP48.pluginTypes.ServerConnector {
   }
 }
 
-Skype.prototype.createContextsFromMessage = function (bot, data) {
-  var textArray = data.content.split(/[^\\]\|/);
-  var ctxs = [];
+Skype.prototype.createContextFromMessage = function (bot, data) {
+  var perms = []; // TODO.
+  var delimiters = this._defaultCommandDelimiters; // TODO: Make this configurable.
 
-  for (var i = 0; i < textArray.length; i++) {
-    textArray[i] = textArray[i].trim();
-    var delimiterLength = this.isTextACommand(textArray[i]);
-    if(delimiterLength) {
-      textArray[i] = textArray[i].slice(delimiterLength).trim();
-    }
-
-    var ctx = {
-      rawMessage: data,
-      nick: data.from,
-      user: data.from,
-      rawText: data.content,
-      text: textArray[i].trim(),
-      to: data.to,
-      myNick: '28:'+this._config.appId,
-      bot: bot,
-      instanceId: this._id,
-      instanceType: 'skype',
-      instance: this,
-      isCmd: delimiterLength ? true : false
-    };
-
-    ctxs.push(ctx);
-  }
-
-  ctxs[ctxs.length-1].last = true;
-
-  return ctxs;
-};
-
-Skype.prototype.isTextACommand = function (text) {
-  var delimit = this._config.commandDelimiters || this._defaultCommandDelimiters;
-  for (var i = 0; i < delimit.length; i++) {
-    if(text.startsWith(delimit[i])) {
-      return delimit[i].length;
-    }
-  }
-
-  return false;
+  return new this._AKP48.Context({
+    instance: this,
+    instanceType: 'skype',
+    nick: data.from, //TODO: get display name rather than username.
+    text: data.content,
+    to: data.to,
+    user: data.from,
+    commandDelimiters: delimiters,
+    myNick: `28:${this._config.appId}`,
+    permissions: perms,
+    rawMessage: data
+  });
 };
 
 Skype.prototype.getPersistentObjects = function () {
@@ -133,5 +110,3 @@ Skype.prototype.getPersistentObjects = function () {
 };
 
 module.exports = Skype;
-module.exports.type = 'ServerConnector';
-module.exports.pluginName = 'skype';
